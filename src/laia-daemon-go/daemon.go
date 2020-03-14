@@ -16,10 +16,15 @@ import (
 //////////////////// CONSTS ////////////////////
 
 const (
-	DataPath     = "data/"
-	ModelPath    = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/model.t7"
-	SymbolsTable = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/data/lang/char/symbs.txt"
-	Imgs2Decode  = "data/imgs2decode.txt"
+	DataPath = "data/"
+	//ModelPath    = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/model.t7"
+	ModelPath = "model.t7"
+	//SymbolsTable = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/data/lang/char/symbs.txt"
+	SymbolsTable = "symbs.txt"
+
+	Imgs2Decode = "data/imgs2decode.txt"
+
+	SizeImg = "64"
 )
 
 //////////////////// STRUCTURES ////////////////////
@@ -45,7 +50,7 @@ func downloadImg(img LineImg) error {
 	}
 
 	//open a file for writing
-	file, err := os.Create(DataPath + img.Name + img.Ext)
+	file, err := os.Create(DataPath + img.Name + "." + img.Ext)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't create image file:\n%v", err.Error())
 		return err
@@ -56,6 +61,23 @@ func downloadImg(img LineImg) error {
 	_, err = io.Copy(file, response.Body)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't copy data to recreate image:\n%v", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func resizeImg(img LineImg) error {
+	args := []string{DataPath + img.Name + "." + img.Ext,
+		"-resize",
+		"x" + SizeImg,
+		DataPath + img.Name + "." + img.Ext}
+
+	cmd := exec.Command("convert", args...)
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Printf("[ERROR] resizeImg failed with:\n%v caused by\n%v", err.Error(), string(out))
 		return err
 	}
 
@@ -87,15 +109,17 @@ func listImgs2Decode(imgs []LineImg) error {
 /**
  * Transform the decode output into a real transcription
  */
-func decode2Transc(decode string, img LineImg) {
+func decode2Transc(decode string, img LineImg) string {
 	// remove name of the img
-	strings.Replace(decode, img.Name, "", -1)
+	transc := strings.Replace(decode, img.Name, "", -1)
 
 	// remove spaces between letters
-	strings.Join(strings.Fields(decode), "")
+	transc = strings.Join(strings.Fields(transc), "")
 
 	// transform "space" symbols into real spaces
-	strings.Replace(decode, "{space}", "", -1)
+	transc = strings.Replace(transc, "{space}", " ", -1)
+
+	return transc
 }
 
 //////////////////// LAIA TOOLKIT COMMANDS ////////////////////
@@ -115,8 +139,7 @@ func laiaDecode(img LineImg) (string, error) {
 		return "", err
 	}
 
-	transc := string(decode)
-	decode2Transc(transc, img)
+	transc := decode2Transc(string(decode), img)
 
 	return transc, nil
 }
@@ -162,8 +185,16 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Failed downloading image at given url"))
 		return
 	}
+	log.Printf("[INFO] recognizeImg => Image " + img.Name + " downloaded")
 
-	log.Printf("[INFO] recognizeImg => Image downloaded")
+	// resize downloaded image
+	err = resizeImg(img)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error while processing given image"))
+		return
+	}
+	log.Printf("[INFO] recognizeImg => Image resized")
 
 	// save image's local path to the list of images to decode
 	err = listImgs2Decode([]LineImg{img})
@@ -172,17 +203,16 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error processing given image"))
 		return
 	}
-
 	log.Printf("[INFO] recognizeImg => Image in queue to be decoded")
 
+	// decode image to get its transcription using laia
 	transcript, err := laiaDecode(img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error with the recognizer when transcribing image"))
 		return
 	}
-
-	log.Printf("[INFO] recognizeImg => Image decoded")
+	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", transcript)
 
 	// send successful response to user
 	w.WriteHeader(http.StatusOK)
@@ -193,6 +223,8 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 //////////////////// MAIN OF THE DAEMON ////////////////////
 
 func main() {
+	log.Printf("-------------------- LAIA DAEMON STARTED --------------------")
+
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", home)
 
