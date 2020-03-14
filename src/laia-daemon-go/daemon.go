@@ -16,15 +16,17 @@ import (
 //////////////////// CONSTS ////////////////////
 
 const (
-	DataPath = "data/"
-	//ModelPath    = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/model.t7"
-	ModelPath = "model.t7"
-	//SymbolsTable = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/data/lang/char/symbs.txt"
-	SymbolsTable = "symbs.txt"
-
+	DataPath    = "data/"
 	Imgs2Decode = "data/imgs2decode.txt"
+	SizeImg     = "64"
 
-	SizeImg = "64"
+	/* Raoh */
+	//ModelPath    = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/model.t7"
+	//SymbolsTable = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/data/lang/char/symbs.txt"
+
+	/* Local */
+	ModelPath    = "model.t7"
+	SymbolsTable = "symbs.txt"
 )
 
 //////////////////// STRUCTURES ////////////////////
@@ -34,9 +36,10 @@ type RecoParams struct {
 }
 
 type LineImg struct {
-	Url  string
-	Name string
-	Ext  string
+	Url        string
+	Name       string
+	Ext        string
+	NameAndExt string
 }
 
 //////////////////// HELPER FUNCTIONS ////////////////////
@@ -50,7 +53,7 @@ func downloadImg(img LineImg) error {
 	}
 
 	//open a file for writing
-	file, err := os.Create(DataPath + img.Name + "." + img.Ext)
+	file, err := os.Create(DataPath + img.NameAndExt)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't create image file:\n%v", err.Error())
 		return err
@@ -68,10 +71,10 @@ func downloadImg(img LineImg) error {
 }
 
 func resizeImg(img LineImg) error {
-	args := []string{DataPath + img.Name + "." + img.Ext,
+	args := []string{DataPath + img.NameAndExt,
 		"-resize",
 		"x" + SizeImg,
-		DataPath + img.Name + "." + img.Ext}
+		DataPath + img.NameAndExt}
 
 	cmd := exec.Command("convert", args...)
 
@@ -96,7 +99,7 @@ func listImgs2Decode(imgs []LineImg) error {
 	defer f.Close()
 
 	for _, img := range imgs {
-		_, err = f.WriteString(DataPath + img.Name + "." + img.Ext + "\n")
+		_, err = f.WriteString(DataPath + img.NameAndExt + "\n")
 		if err != nil {
 			log.Printf("[ERROR] listImgs2Decode => Error writing in file:\n%v", err.Error())
 			return err
@@ -176,7 +179,7 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(reqData.Url, "/")
 	imageNameWithExt := segments[len(segments)-1] // image name + extension
 	segments = strings.Split(imageNameWithExt, ".")
-	img := LineImg{reqData.Url, segments[0], segments[1]}
+	img := LineImg{reqData.Url, segments[0], segments[1], imageNameWithExt}
 
 	// download image from url
 	err = downloadImg(img)
@@ -213,6 +216,12 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", transcript)
+
+	// delete image after decoding it, to free storage space
+	err = os.Remove(DataPath + img.NameAndExt)
+	if err != nil {
+		log.Printf("[WARN] recognizeImg => Error deleting image afterward")
+	}
 
 	// send successful response to user
 	w.WriteHeader(http.StatusOK)
