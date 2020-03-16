@@ -34,10 +34,15 @@ const (
 type LineImg struct {
 	Url        string
 	Id         string
-	Name       string
-	Ext        string
-	NameAndExt string
-	Transc     string
+	transc     string
+	name       string
+	ext        string
+	nameAndExt string
+}
+
+type RecoResponse struct {
+	Id    string
+	Value string
 }
 
 //////////////////// HELPER FUNCTIONS ////////////////////
@@ -51,7 +56,7 @@ func downloadImg(img LineImg) error {
 	}
 
 	//open a file for writing
-	file, err := os.Create(DataPath + img.NameAndExt)
+	file, err := os.Create(DataPath + img.nameAndExt)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't create image file:\n%v", err.Error())
 		return err
@@ -69,10 +74,10 @@ func downloadImg(img LineImg) error {
 }
 
 func resizeImg(img LineImg) error {
-	args := []string{DataPath + img.NameAndExt,
+	args := []string{DataPath + img.nameAndExt,
 		"-resize",
 		"x" + SizeImg,
-		DataPath + img.NameAndExt}
+		DataPath + img.nameAndExt}
 
 	cmd := exec.Command("convert", args...)
 
@@ -97,7 +102,7 @@ func listImgs2Decode(imgs []LineImg) error {
 	defer f.Close()
 
 	for _, img := range imgs {
-		_, err = f.WriteString(DataPath + img.NameAndExt + "\n")
+		_, err = f.WriteString(DataPath + img.nameAndExt + "\n")
 		if err != nil {
 			log.Printf("[ERROR] listImgs2Decode => Error writing in file:\n%v", err.Error())
 			return err
@@ -112,7 +117,7 @@ func listImgs2Decode(imgs []LineImg) error {
  */
 func decode2Transc(decode string, img *LineImg) {
 	// remove name of the img
-	transc := strings.Replace(decode, img.Name, "", -1)
+	transc := strings.Replace(decode, img.name, "", -1)
 
 	// remove spaces between letters
 	transc = strings.Join(strings.Fields(transc), "")
@@ -120,7 +125,7 @@ func decode2Transc(decode string, img *LineImg) {
 	// transform "space" symbols into real spaces
 	transc = strings.Replace(transc, "{space}", " ", -1)
 
-	img.Transc = transc
+	img.transc = transc
 }
 
 //////////////////// LAIA TOOLKIT COMMANDS ////////////////////
@@ -177,9 +182,9 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(img.Url, "/")
 	imageNameWithExt := segments[len(segments)-1] // image name + extension
 	segments = strings.Split(imageNameWithExt, ".")
-	img.Name = segments[0]
-	img.Ext = segments[1]
-	img.NameAndExt = imageNameWithExt
+	img.name = segments[0]
+	img.ext = segments[1]
+	img.nameAndExt = imageNameWithExt
 
 	// download image from url
 	err = downloadImg(img)
@@ -188,7 +193,7 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Failed downloading image at given url"))
 		return
 	}
-	log.Printf("[INFO] recognizeImg => Image " + img.Name + " downloaded")
+	log.Printf("[INFO] recognizeImg => Image " + img.name + " downloaded")
 
 	// resize downloaded image
 	err = resizeImg(img)
@@ -215,17 +220,32 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error with the recognizer when transcribing image"))
 		return
 	}
-	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", img.Transc)
+	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", img.transc)
 
 	// delete image after decoding it, to free storage space
-	err = os.Remove(DataPath + img.NameAndExt)
+	err = os.Remove(DataPath + img.nameAndExt)
 	if err != nil {
 		log.Printf("[WARN] recognizeImg => Error deleting image afterward")
 	}
 
+	// keep useful fields and marshal them to json
+	recoRes := RecoResponse{
+		Id:    img.Id,
+		Value: img.transc,
+	}
+
+	jsonData, err := json.Marshal(recoRes)
+	if err != nil {
+		log.Printf("[ERROR] recognizeImg => Fail marshalling response to JSON:\n%v", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error formatting response"))
+		return
+	}
+
 	// send successful response to user
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, img.Transc)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonData)
 
 }
 
