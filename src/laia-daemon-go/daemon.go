@@ -31,15 +31,13 @@ const (
 
 //////////////////// STRUCTURES ////////////////////
 
-type RecoParams struct {
-	Url string `json:"url"`
-}
-
 type LineImg struct {
 	Url        string
+	Id         string
 	Name       string
 	Ext        string
 	NameAndExt string
+	Transc     string
 }
 
 //////////////////// HELPER FUNCTIONS ////////////////////
@@ -112,7 +110,7 @@ func listImgs2Decode(imgs []LineImg) error {
 /**
  * Transform the decode output into a real transcription
  */
-func decode2Transc(decode string, img LineImg) string {
+func decode2Transc(decode string, img *LineImg) {
 	// remove name of the img
 	transc := strings.Replace(decode, img.Name, "", -1)
 
@@ -122,12 +120,12 @@ func decode2Transc(decode string, img LineImg) string {
 	// transform "space" symbols into real spaces
 	transc = strings.Replace(transc, "{space}", " ", -1)
 
-	return transc
+	img.Transc = transc
 }
 
 //////////////////// LAIA TOOLKIT COMMANDS ////////////////////
 
-func laiaDecode(img LineImg) (string, error) {
+func laiaDecode(img *LineImg) error {
 
 	args := []string{"decode",
 		"--symbols_table", SymbolsTable,
@@ -139,12 +137,12 @@ func laiaDecode(img LineImg) (string, error) {
 	decode, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("[ERROR] laiaDecode failed with:\n%v caused by\n%v", err.Error(), string(decode))
-		return "", err
+		return err
 	}
 
-	transc := decode2Transc(string(decode), img)
+	decode2Transc(string(decode), img)
 
-	return transc, nil
+	return nil
 }
 
 //////////////////// API REQUESTS ////////////////////
@@ -164,8 +162,8 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert body to json
-	var reqData RecoParams
-	err = json.Unmarshal(reqBody, &reqData)
+	var img LineImg
+	err = json.Unmarshal(reqBody, &img)
 	if err != nil {
 		log.Printf("[ERROR] recognizeImg => Unmarshal body:\n%v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
@@ -173,13 +171,15 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("[INFO] recognizeImg => Received request body:\n%+v", reqData)
+	log.Printf("[INFO] recognizeImg => Received request body:\n%+v", img)
 
 	// create LineImg from url
-	segments := strings.Split(reqData.Url, "/")
+	segments := strings.Split(img.Url, "/")
 	imageNameWithExt := segments[len(segments)-1] // image name + extension
 	segments = strings.Split(imageNameWithExt, ".")
-	img := LineImg{reqData.Url, segments[0], segments[1], imageNameWithExt}
+	img.Name = segments[0]
+	img.Ext = segments[1]
+	img.NameAndExt = imageNameWithExt
 
 	// download image from url
 	err = downloadImg(img)
@@ -209,13 +209,13 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] recognizeImg => Image in queue to be decoded")
 
 	// decode image to get its transcription using laia
-	transcript, err := laiaDecode(img)
+	err = laiaDecode(&img)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error with the recognizer when transcribing image"))
 		return
 	}
-	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", transcript)
+	log.Printf("[INFO] recognizeImg => Image decoded: \"%s\"", img.Transc)
 
 	// delete image after decoding it, to free storage space
 	err = os.Remove(DataPath + img.NameAndExt)
@@ -225,7 +225,7 @@ func recognizeImg(w http.ResponseWriter, r *http.Request) {
 
 	// send successful response to user
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, transcript)
+	fmt.Fprintf(w, img.Transc)
 
 }
 
