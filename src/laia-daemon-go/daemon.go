@@ -328,6 +328,20 @@ func main() {
 		}
 	}
 
+	// check that used commands exist
+	_, err := exec.LookPath("convert")
+	if err != nil {
+		fmt.Printf("Missing command `convert`. This program needs ImageMagick's convert in order to process images. Please install it or verify that it's accessible in your PATH.")
+		os.Exit(5)
+	}
+
+	_, err = exec.LookPath("laia-docker")
+	if err != nil {
+		fmt.Printf("Missing command `laia-docker`. This daemon's only purpose is to interact with the Laia HTR Toolkit. Please install it or verify that it's accessible in your PATH.")
+		os.Exit(5)
+	}
+
+	// run the daemon
 	log.Printf("-------------------- LAIA DAEMON STARTED --------------------")
 
 	router := mux.NewRouter().StrictSlash(true)
