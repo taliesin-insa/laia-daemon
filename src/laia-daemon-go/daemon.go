@@ -10,14 +10,15 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 )
 
 //////////////////// CONSTS ////////////////////
 
-const (
+var (
 	DataPath    = "data/"
-	Imgs2Decode = "data/imgs2decode.txt"
+	Imgs2Decode = DataPath + "imgs2decode.txt"
 	SizeImg     = "64"
 
 	/* Raoh */
@@ -271,6 +272,62 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 //////////////////// MAIN OF THE DAEMON ////////////////////
 
 func main() {
+	// get launching args to define consts
+	args := os.Args[1:]
+	// check for "--help" argument
+	for _, arg := range args {
+		if arg == "--help" {
+			if len(args) > 1 {
+				fmt.Printf("Argument --help can only be used alone.\n")
+				os.Exit(2)
+			} else {
+				fmt.Printf("Available arguments:\n" +
+					"--data_path: directory where images should be downloaded and stored during execution\n" +
+					"--img_height: height in pixels for images expected by the laia model\n" +
+					"--model_path: location of the trained laia model\n" +
+					"--symbols_path: location of the table of symbols used by the model (list of recognizable characters)\n")
+				os.Exit(3)
+			}
+		}
+	}
+
+	// other arguments
+	for i := 0; i < len(args); i += 2 {
+		switch args[i] {
+		case "--data_path":
+			DataPath = args[i+1]
+			if _, err := os.Stat(DataPath); os.IsNotExist(err) {
+				fmt.Printf("Given data path (`%s`) does not exist. Please specify an existing directory.\n", DataPath)
+				os.Exit(4)
+			}
+
+		case "--img_height":
+			SizeImg = args[i+1]
+			if _, err := strconv.Atoi(SizeImg); err != nil {
+				fmt.Printf("Given image height (`%s`) isn't a number. Please use an integer.\n", SizeImg)
+				os.Exit(4)
+			}
+
+		case "--model_path":
+			ModelPath = args[i+1]
+			if _, err := os.Stat(ModelPath); os.IsNotExist(err) {
+				fmt.Printf("Given model (`%s`) does not exist. Don't forget to specify the model's filename in the path.\n", ModelPath)
+				os.Exit(4)
+			}
+
+		case "--symbols_path":
+			SymbolsTable = args[i+1]
+			if _, err := os.Stat(SymbolsTable); os.IsNotExist(err) {
+				fmt.Printf("Given symbols table (`%s`) does not exist. Don't forget to specify the symbols table's filename in the path.\n", SymbolsTable)
+				os.Exit(4)
+			}
+
+		default:
+			fmt.Printf("Wrong argument `%s`, try --help to get a list of all valid arguments.\n", args[i])
+			os.Exit(1)
+		}
+	}
+
 	log.Printf("-------------------- LAIA DAEMON STARTED --------------------")
 
 	router := mux.NewRouter().StrictSlash(true)
