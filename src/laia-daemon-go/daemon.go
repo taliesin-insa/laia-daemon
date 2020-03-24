@@ -168,10 +168,18 @@ func laiaDecode(imgs []*LineImg) error {
 //////////////////// API REQUESTS ////////////////////
 
 func home(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "This daemon exposes an API enabling you to interact with Laia")
+	fmt.Fprint(w, "Status: running. This daemon exposes an API enabling you to interact with Laia")
 }
 
 func recognizeImgs(w http.ResponseWriter, r *http.Request) {
+	// test that request parameters aren't empty
+	if r.Body == nil {
+		log.Printf("[ERROR] recognizeImg => Received body is empty")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Request's body is empty, please provide required parameters"))
+		return
+	}
+
 	// get request body
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -187,7 +195,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("[ERROR] recognizeImg => Unmarshal body:\n%v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("Couldn't unmarshal received body to JSON"))
+		w.Write([]byte("Couldn't unmarshal received body to JSON or wrong parameters"))
 		return
 	}
 
@@ -205,7 +213,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		err = downloadImg(*img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Failed downloading image at given url"))
+			w.Write([]byte("Failed downloading image " + img.Id + " at given url"))
 			return
 		}
 		log.Printf("[INFO] recognizeImg => Image " + img.name + " downloaded")
@@ -214,7 +222,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		err = resizeImg(*img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error while processing given image"))
+			w.Write([]byte("Error while processing image " + img.Id))
 			return
 		}
 		log.Printf("[INFO] recognizeImg => Image resized")
@@ -224,7 +232,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	err = listImgs2Decode(reqImgs.Images)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Error processing given image"))
+		w.Write([]byte("Error preparing recognition"))
 		return
 	}
 	log.Printf("[INFO] recognizeImg => Images waiting to be decoded")
@@ -346,6 +354,7 @@ func main() {
 
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", home)
+	router.HandleFunc("/laiaDaemon", home).Methods("GET")
 
 	router.HandleFunc("/recognizeImgs", recognizeImgs).Methods("GET")
 
