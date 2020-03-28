@@ -19,19 +19,17 @@ Main request, used to get the transcription provided by the recognizer for given
 ### \[GET\]
 - Parameters (application/json)
     ~~~json
-    {
-        "Images": [
-            {
-                "Url": "http://inky.local:9501/snippets/a01-007u-08.png",
-                "Id": "5e6920ebdd33ec7fd9b3ab99"
-            },
-            {
-                "Url": "http://inky.local:9501/snippets/a01-007u-09.png",
-                "Id": "42"
-            },
-            ...
-        ]
-    }
+   [
+        {
+            "Url": "http://inky.local:9501/snippets/a01-007u-08.png",
+            "Id": "5e6920ebdd33ec7fd9b3ab99"
+        },
+        {
+            "Url": "http://inky.local:9501/snippets/a01-007u-09.png",
+            "Id": "42"
+        },
+        ...
+   ]
     ~~~
 The `Id` field is the one associated with the snippet in the database of the project.
 The `Url` refers to an online URL (in our case, URL of the image on the FileServer).
@@ -39,19 +37,17 @@ The `Url` refers to an online URL (in our case, URL of the image on the FileServ
 - Response 200 (application/json)
     - Body
         ~~~json
-      {
-          "Images": [
-              {
-                  "Id": "5e6920ebdd33ec7fd9b3ab99",
-                  "Value": "some random transcription"
-              },
-              {
-                  "Id": "42",
-                  "Value": "produced by laia"
-              },
-              ...
-          ]
-      }
+      [
+          {
+              "Id": "5e6920ebdd33ec7fd9b3ab99",
+              "Value": "some random transcription"
+          },
+          {
+              "Id": "42",
+              "Value": "produced by laia"
+          },
+          ...
+      ]
       ~~~
   The `Id` field is still the one associated with the snippet in the database of the project.
   The `Value` field is the transcription that laia gave for the image.

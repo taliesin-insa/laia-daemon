@@ -32,10 +32,6 @@ var (
 
 //////////////////// STRUCTURES ////////////////////
 
-//type ReqBody struct {
-//	Images []*LineImg
-//}
-
 type LineImg struct {
 	Url        string
 	Id         string
@@ -44,10 +40,6 @@ type LineImg struct {
 	ext        string
 	nameAndExt string
 }
-
-//type ReqRes struct {
-//	Images []ImgValue
-//}
 
 type ImgValue struct {
 	Id    string
