@@ -33,8 +33,8 @@ var (
 //////////////////// STRUCTURES ////////////////////
 
 type LineImg struct {
-	Url        string
 	Id         string
+	Url        string
 	transc     string
 	name       string
 	ext        string
