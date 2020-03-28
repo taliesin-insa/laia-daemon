@@ -356,8 +356,8 @@ func main() {
 	router.HandleFunc("/", home)
 	router.HandleFunc("/laiaDaemon", home).Methods("GET")
 
-	router.HandleFunc("/recognizeImgs", recognizeImgs).Methods("GET")
+	router.HandleFunc("/laiaDaemon/recognizeImgs", recognizeImgs).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(http.ListenAndServe(":12191", router))
 
 }

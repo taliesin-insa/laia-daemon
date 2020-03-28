@@ -13,7 +13,7 @@ Simple method to test if the Go API is running correctly.
 Status: running. This daemon exposes an API enabling you to interact with Laia
 ```
 
-## Retrieve transcriptions for images \[/recognizeImgs\]
+## Retrieve transcriptions for images \[/laiaDaemon/recognizeImgs\]
 Main request, used to get the transcription provided by the recognizer for given images.
 
 ### \[GET\]
