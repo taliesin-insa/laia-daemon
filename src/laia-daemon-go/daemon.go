@@ -32,9 +32,9 @@ var (
 
 //////////////////// STRUCTURES ////////////////////
 
-type ReqBody struct {
-	Images []*LineImg
-}
+//type ReqBody struct {
+//	Images []*LineImg
+//}
 
 type LineImg struct {
 	Url        string
@@ -45,9 +45,9 @@ type LineImg struct {
 	nameAndExt string
 }
 
-type ReqRes struct {
-	Images []ImgValue
-}
+//type ReqRes struct {
+//	Images []ImgValue
+//}
 
 type ImgValue struct {
 	Id    string
@@ -190,7 +190,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// convert body to json
-	var reqImgs ReqBody
+	var reqImgs []*LineImg
 	err = json.Unmarshal(reqBody, &reqImgs)
 	if err != nil {
 		log.Printf("[ERROR] recognizeImg => Unmarshal body:\n%v", err.Error())
@@ -199,7 +199,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, img := range reqImgs.Images {
+	for _, img := range reqImgs {
 
 		// create LineImg from url
 		segments := strings.Split(img.Url, "/")
@@ -229,7 +229,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// save image's local path to the list of images to decode
-	err = listImgs2Decode(reqImgs.Images)
+	err = listImgs2Decode(reqImgs)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error preparing recognition"))
@@ -238,15 +238,15 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[INFO] recognizeImg => Images waiting to be decoded")
 
 	// decode image to get its transcription using laia
-	err = laiaDecode(reqImgs.Images)
+	err = laiaDecode(reqImgs)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error with the recognizer when transcribing image"))
 		return
 	}
 
-	var reqResponse ReqRes
-	for _, img := range reqImgs.Images {
+	var reqResponse []ImgValue
+	for _, img := range reqImgs {
 		// delete image when we no longer use it, to free storage space
 		err = os.Remove(DataPath + img.nameAndExt)
 		if err != nil {
@@ -254,7 +254,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// keep only useful fields for the response
-		reqResponse.Images = append(reqResponse.Images, ImgValue{
+		reqResponse = append(reqResponse, ImgValue{
 			Id:    img.Id,
 			Value: img.transc,
 		})
