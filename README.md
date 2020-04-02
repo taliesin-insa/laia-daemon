@@ -17,22 +17,23 @@ Simple method to test if the Go API is running correctly.
 Main request, used to get the transcription provided by the recognizer for given images.
 
 ### \[GET\]
-- Parameters (application/json)
-    ~~~json
-   [
-        {
-            "Url": "http://inky.local:9501/snippets/a01-007u-08.png",
-            "Id": "5e6920ebdd33ec7fd9b3ab99"
-        },
-        {
-            "Url": "http://inky.local:9501/snippets/a01-007u-09.png",
-            "Id": "42"
-        },
-        ...
-   ]
-    ~~~
+- Request (application/json)
+	- Body
+		~~~json
+	   [
+		    {
+		        "Url": "http://inky.local:9501/snippets/a01-007u-08.png",
+		        "Id": "5e6920ebdd33ec7fd9b3ab99"
+		    },
+		    {
+		        "Url": "http://inky.local:9501/snippets/a01-007u-09.png",
+		        "Id": "42"
+		    },
+		    ...
+	   ]
+		~~~
 The `Id` field is the one associated with the snippet in the database of the project.
-The `Url` refers to an online URL (in our case, URL of the image on the FileServer).
+The `Url` refers to a web URL (in our case, URL of the image on the FileServer).
 
 - Response 200 (application/json)
     - Body
