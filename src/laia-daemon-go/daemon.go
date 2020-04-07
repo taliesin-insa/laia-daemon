@@ -33,7 +33,7 @@ var (
 //////////////////// STRUCTURES ////////////////////
 
 type LineImg struct {
-	Id         string
+	Id         []byte
 	Url        string
 	transc     string
 	name       string
@@ -42,7 +42,7 @@ type LineImg struct {
 }
 
 type ImgValue struct {
-	Id    string
+	Id    []byte
 	Value string
 }
 
@@ -205,7 +205,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		err = downloadImg(*img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Failed downloading image " + img.Id + " at given url"))
+			w.Write([]byte("Failed downloading image " + string(img.Id) + " at given url"))
 			return
 		}
 		log.Printf("[INFO] recognizeImg => Image " + img.name + " downloaded")
@@ -214,7 +214,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		err = resizeImg(*img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte("Error while processing image " + img.Id))
+			w.Write([]byte("Error while processing image " + string(img.Id)))
 			return
 		}
 		log.Printf("[INFO] recognizeImg => Image resized")
