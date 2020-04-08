@@ -18,7 +18,7 @@ import (
 
 var (
 	DataPath    = "data/"
-	Imgs2Decode = DataPath + "imgs2decode.txt"
+	Imgs2Decode = "imgs2decode.txt"
 	SizeImg     = "64"
 
 	/* Raoh */
@@ -95,7 +95,7 @@ func resizeImg(img LineImg) error {
  * NOTE: If list of images already exists, replace it.
  */
 func listImgs2Decode(imgs []*LineImg) error {
-	f, err := os.Create(Imgs2Decode)
+	f, err := os.Create(DataPath + Imgs2Decode)
 	if err != nil {
 		log.Printf("[ERROR] listImgs2Decode => Couldn't create list file:\n%v", err.Error())
 		return err
