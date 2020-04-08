@@ -160,10 +160,13 @@ func laiaDecode(imgs []*LineImg) error {
 //////////////////// API REQUESTS ////////////////////
 
 func home(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[INFO] HomeLink joined")
 	fmt.Fprint(w, "Status: running. This daemon exposes an API enabling you to interact with Laia")
 }
 
 func recognizeImgs(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[INFO] recognizeImgs joined")
+
 	// test that request parameters aren't empty
 	if r.Body == nil {
 		log.Printf("[ERROR] recognizeImg => Received body is empty")
@@ -175,7 +178,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	// get request body
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("[ERROR] recognizeImg => Request body:\n%v", err.Error())
+		log.Printf("[ERROR] recognizeImgs => Request body:\n%v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Couldn't parse body of received request"))
 		return
@@ -185,7 +188,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	var reqImgs []*LineImg
 	err = json.Unmarshal(reqBody, &reqImgs)
 	if err != nil {
-		log.Printf("[ERROR] recognizeImg => Unmarshal body:\n%v", err.Error())
+		log.Printf("[ERROR] recognizeImgs => Unmarshal body:\n%v", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("Couldn't unmarshal received body to JSON or wrong parameters"))
 		return
@@ -208,7 +211,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Failed downloading image " + string(img.Id) + " at given url"))
 			return
 		}
-		log.Printf("[INFO] recognizeImg => Image " + img.name + " downloaded")
+		log.Printf("[INFO] recognizeImgs => Image " + img.name + " downloaded")
 
 		// resize downloaded image
 		err = resizeImg(*img)
@@ -217,7 +220,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("Error while processing image " + string(img.Id)))
 			return
 		}
-		log.Printf("[INFO] recognizeImg => Image resized")
+		log.Printf("[INFO] recognizeImgs => Image resized")
 	}
 
 	// save image's local path to the list of images to decode
@@ -227,7 +230,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error preparing recognition"))
 		return
 	}
-	log.Printf("[INFO] recognizeImg => Images waiting to be decoded")
+	log.Printf("[INFO] recognizeImgs => Images waiting to be decoded")
 
 	// decode image to get its transcription using laia
 	err = laiaDecode(reqImgs)
@@ -242,7 +245,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 		// delete image when we no longer use it, to free storage space
 		err = os.Remove(DataPath + img.nameAndExt)
 		if err != nil {
-			log.Printf("[WARN] recognizeImg => Error deleting image %s afterward", img.nameAndExt)
+			log.Printf("[WARN] recognizeImgs => Error deleting image %s afterward", img.nameAndExt)
 		}
 
 		// keep only useful fields for the response
@@ -255,7 +258,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	// transform the response into JSON
 	jsonData, err := json.Marshal(reqResponse)
 	if err != nil {
-		log.Printf("[ERROR] recognizeImg => Fail marshalling response to JSON:\n%v", err.Error())
+		log.Printf("[ERROR] recognizeImgs => Fail marshalling response to JSON:\n%v", err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error formatting response"))
 		return
@@ -265,7 +268,7 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonData)
-	log.Printf("[INFO] recognizeImg => response sent")
+	log.Printf("[INFO] recognizeImgs => response sent")
 
 }
 
