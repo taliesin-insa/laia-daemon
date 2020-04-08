@@ -281,14 +281,14 @@ func main() {
 	for _, arg := range args {
 		if arg == "--help" {
 			if len(args) > 1 {
-				fmt.Printf("Argument --help can only be used alone.\n")
+				fmt.Println("Argument --help can only be used alone.")
 				os.Exit(2)
 			} else {
-				fmt.Printf("Available arguments:\n" +
+				fmt.Println("Available arguments:\n" +
 					"--data_path: directory where images should be downloaded and stored during execution\n" +
 					"--img_height: height in pixels for images expected by the laia model\n" +
 					"--model_path: location of the trained laia model\n" +
-					"--symbols_path: location of the table of symbols used by the model (list of recognizable characters)\n")
+					"--symbols_path: location of the table of symbols used by the model (list of recognizable characters)")
 				os.Exit(3)
 			}
 		}
@@ -334,13 +334,13 @@ func main() {
 	// check that used commands exist
 	_, err := exec.LookPath("convert")
 	if err != nil {
-		fmt.Printf("Missing command `convert`. This program needs ImageMagick's convert in order to process images. Please install it or verify that it's accessible in your PATH.")
+		fmt.Println("Missing command `convert`. This program needs ImageMagick's convert in order to process images. Please install it or verify that it's accessible in your PATH.")
 		os.Exit(5)
 	}
 
 	_, err = exec.LookPath("laia-docker")
 	if err != nil {
-		fmt.Printf("Missing command `laia-docker`. This daemon's only purpose is to interact with the Laia HTR Toolkit. Please install it or verify that it's accessible in your PATH.")
+		fmt.Println("Missing command `laia-docker`. This daemon's only purpose is to interact with the Laia HTR Toolkit. Please install it or verify that it's accessible in your PATH.")
 		os.Exit(5)
 	}
 
