@@ -139,7 +139,7 @@ func decode2Transc(laiaOutput string, imgs []*LineImg) {
 
 func laiaDecode(imgs []*LineImg) error {
 
-	var laiaCmd = "laia-docker decode --symbols_table " + SymbolsTable + " " + ModelPath + " " + Imgs2Decode
+	var laiaCmd = "laia-docker decode --symbols_table " + SymbolsTable + " " + ModelPath + " " + DataPath + Imgs2Decode
 
 	cmd := exec.Command("/bin/sh", "-c", laiaCmd)
 
