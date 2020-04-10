@@ -335,15 +335,10 @@ func main() {
 		os.Exit(5)
 	}
 
-	//TODO remove later
-	log.Printf("[DEBUG] PATH var = %v", os.Getenv("PATH"))
-
 	path, err := exec.LookPath("laia-docker")
 	if err != nil {
 		fmt.Println("Missing command `laia-docker`. This daemon's only purpose is to interact with the Laia HTR Toolkit. Please install it or verify that it's accessible in your PATH.")
-		// TODO remove later
-		fmt.Printf("[DEBUG] %v\n", err)
-		//os.Exit(5)
+		os.Exit(5)
 	} else {
 		fmt.Printf("[DEBUG] Laia path: %s\n", path)
 	}
