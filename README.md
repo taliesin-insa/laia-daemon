@@ -2,6 +2,15 @@
 
 Daemon exposing a REST API to interact with [Laia](https://github.com/jpuigcerver/Laia), running on a distant server (Raoh for our project).
 
+# How to launch
+Laia should be installed on a server with one or more good GPU(s). The daemon is currently made to use `laia-docker`,
+the docker installed version of Laia. This daemon is simply a Golang executable, launched as a linux service on the server.
+
+On Raoh (INSA's server on which we work), run the following command from the HOME of the `kub_info` account to start the daemon:
+```shell script
+sudo ./laia-daemon/releases/laia-daemon --data_path /tmp/kub_info/data-daemon/ --model_path /home/kub_info/laia-daemon/model.t7 --symbols_path /home/kub_info/laia-daemon/symbs.txt
+```
+
 # API
 
 ## Home Link \[/laiaDaeomon\]
