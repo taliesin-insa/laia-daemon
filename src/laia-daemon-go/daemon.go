@@ -135,11 +135,24 @@ func decode2Transc(laiaOutput string, imgs []*LineImg) {
 	}
 }
 
+/**
+ * Delete downloaded images on the disk to free space after usage
+ */
+func deleteImgs(reqImgs []*LineImg) {
+	for _, img := range reqImgs {
+		// delete image when we no longer use it, to free storage space
+		err := os.Remove(DataPath + img.nameAndExt)
+		if err != nil {
+			log.Printf("[WARN] recognizeImgs => Error deleting image %s afterward", img.nameAndExt)
+		}
+	}
+}
+
 //////////////////// LAIA TOOLKIT COMMANDS ////////////////////
 
 func laiaDecode(imgs []*LineImg) error {
 
-	var laiaCmd = "laia-docker decode --symbols_table " + SymbolsTable + " " + ModelPath + " " + Imgs2Decode
+	var laiaCmd = "laia-docker decode --symbols_table " + SymbolsTable + " " + ModelPath + " " + DataPath + Imgs2Decode
 
 	cmd := exec.Command("/bin/sh", "-c", laiaCmd)
 
@@ -192,7 +205,6 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, img := range reqImgs {
-
 		// create LineImg from url
 		segments := strings.Split(img.Url, "/")
 		imageNameWithExt := segments[len(segments)-1] // image name + extension
@@ -209,22 +221,26 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Printf("[INFO] recognizeImgs => Image " + img.name + " downloaded")
+	}
 
-		// resize downloaded image
+	// resize downloaded images
+	for _, img := range reqImgs {
 		err = resizeImg(*img)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error while processing image " + string(img.Id)))
+			deleteImgs(reqImgs)
 			return
 		}
-		log.Printf("[INFO] recognizeImgs => Image resized")
 	}
+	log.Printf("[INFO] recognizeImgs => Images resized")
 
 	// save image's local path to the list of images to decode
 	err = listImgs2Decode(reqImgs)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error preparing recognition"))
+		deleteImgs(reqImgs)
 		return
 	}
 	log.Printf("[INFO] recognizeImgs => Images waiting to be decoded")
@@ -234,17 +250,14 @@ func recognizeImgs(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Error with the recognizer when transcribing image"))
+		deleteImgs(reqImgs)
 		return
 	}
 
+	deleteImgs(reqImgs)
+
 	var reqResponse []ImgValue
 	for _, img := range reqImgs {
-		// delete image when we no longer use it, to free storage space
-		err = os.Remove(DataPath + img.nameAndExt)
-		if err != nil {
-			log.Printf("[WARN] recognizeImgs => Error deleting image %s afterward", img.nameAndExt)
-		}
-
 		// keep only useful fields for the response
 		reqResponse = append(reqResponse, ImgValue{
 			Id:    img.Id,
