@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -49,14 +50,18 @@ type ImgValue struct {
 //////////////////// HELPER FUNCTIONS ////////////////////
 
 func downloadImg(img LineImg) error {
-	// don't worry about errors
-	response, err := http.Get(img.Url)
+	// Set the request config to not check the certificate
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	response, err := client.Get(img.Url)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't get image:\n%v", err.Error())
 		return err
 	}
 
-	//open a file for writing
+	// Open a file for writing
 	file, err := os.Create(DataPath + img.nameAndExt)
 	if err != nil {
 		log.Printf("[ERROR] downloadImg => Couldn't create image file:\n%v", err.Error())
