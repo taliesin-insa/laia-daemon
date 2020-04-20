@@ -1,0 +1,4 @@
+# Ignore automatically generated directories
+data
+decode
+train
