@@ -11,6 +11,13 @@ On Raoh (INSA's server on which we work), run the following command from the HOM
 sudo ./laia-daemon/releases/laia-daemon --data_path /tmp/kub_info/data-daemon/ --model_path /home/kub_info/laia-daemon/model.t7 --symbols_path /home/kub_info/laia-daemon/symbs.txt
 ```
 
+## Arguments
+Available arguments:  
+`--data_path`: directory where images should be downloaded and stored during execution  
+`--img_height`: height in pixels for images expected by the laia model  
+`--model_path`: location of the trained laia model  
+`--symbols_path`: location of the table of symbols used by the model (list of recognizable characters)
+
 # API
 
 ## Home Link \[/laiaDaeomon\]

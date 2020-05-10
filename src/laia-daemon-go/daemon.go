@@ -134,6 +134,7 @@ func decode2Transc(laiaOutput string, imgs []*LineImg) {
 
 		// transform "space" symbols into real spaces
 		transc = strings.Replace(transc, "{space}", " ", -1)
+		transc = strings.Replace(transc, "<space>", " ", -1)
 
 		imgs[i].transc = transc
 		log.Printf("[INFO] recognizeImg => Transcription for image %s: \"%s\"", imgs[i].name, imgs[i].transc)
