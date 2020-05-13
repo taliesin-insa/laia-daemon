@@ -15,9 +15,9 @@ sudo ./laia-daemon/releases/laia-daemon --data_path /tmp/kub_info/data-daemon/ -
 
 This command will run the daemon using the [Spanish Numbers](https://github.com/jpuigcerver/Laia/tree/master/egs/spanish-numbers) database model.
 
-If you intend to run the daemon with the [IAM](https://github.com/jpuigcerver/Laia/tree/master/egs/iam) database model, use the following command:
+If you intend to run the daemon with the [IAM](https://github.com/jpuigcerver/Laia/tree/master/egs/iam) database model, get the adequate model and symbols files, put them in the `/data` folder then use the following command:
 ```shell script
-sudo ./laia-daemon/releases/laia-daemon --data_path /tmp/kub_info/data-daemon/ --model_path /home/kub_info/iam/train/lstm1d_h128.t7 --symbols_path /home/kub_info/iam/train/syms.txt --img_height 128
+sudo ./laia-daemon/releases/laia-daemon --data_path /tmp/kub_info/data-daemon/ --model_path /home/kub_info/laia-daemon/data/model_IAM_lstm1d_h128.t7 --symbols_path /home/kub_info/laia-daemon/data/syms_IAM.txt --img_height 128
 ```
 
 ## Arguments

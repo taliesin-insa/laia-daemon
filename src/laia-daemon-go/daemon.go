@@ -18,17 +18,12 @@ import (
 //////////////////// CONSTS ////////////////////
 
 var (
+	/* Default files included in this repo to use the daemon with the Spanish Numbers database */
 	DataPath    = "data/"
 	Imgs2Decode = "imgs2decode.txt"
 	SizeImg     = "64"
-
-	/* Raoh */
-	//ModelPath    = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/model.t7"
-	//SymbolsTable = "~/Documents/INSA/4INFO/Projet-4INFO/LAIA/Laia-master/egs/spanish-numbers/data/lang/char/symbs.txt"
-
-	/* Local */
-	ModelPath    = "model.t7"
-	SymbolsTable = "symbs.txt"
+	ModelPath    = "model_SpaNum.t7"
+	SymbolsTable = "symbs_SpaNum.txt"
 )
 
 //////////////////// STRUCTURES ////////////////////
